@@ -1,0 +1,75 @@
+{
+    "datasets": {
+        "dataset1": {
+            "dataset_id": "svav_dev_dataset",
+            "friendly_name": "svav_dev_dataset",
+            "table_schema": {
+                "table_1": {
+                    "table_id": "table_errors",
+                    "schema": [
+                      {
+                        "name": "Webhook_Message",
+                        "type": "STRING",
+                        "mode": "NULLABLE",
+                        "description": "value"
+                      },
+                      {
+                        "name": "Webhook_failures_Count",
+                        "type": "INTEGER",
+                        "mode": "NULLABLE",
+                        "description": "value"
+                      },
+                      {
+                        "name": "current_datetime",
+                        "type": "DATETIME",
+                        "mode": "NULLABLE",
+                        "description": "value"
+                      },
+                      {
+                        "name": "low",
+                        "type": "DATETIME",
+                        "mode": "NULLABLE",
+                        "description": "value"
+                      },
+                      {
+                        "name": "high",
+                        "type": "DATETIME",
+                        "mode": "NULLABLE",
+                        "description": "value"
+                      }
+                    ]
+                },
+                "table_2": {
+                    "table_id": "table_stats",
+                    "schema": [
+                      {
+                        "name": "count",
+                        "type": "INTEGER",
+                        "mode": "NULLABLE",
+                        "description": "value"
+                      },
+                      {
+                        "name": "current_datetime",
+                        "type": "DATETIME",
+                        "mode": "NULLABLE",
+                        "description": "value"
+                      },
+                      {
+                        "name": "low",
+                        "type": "DATETIME",
+                        "mode": "NULLABLE",
+                        "description": "value"
+                      },
+                      {
+                        "name": "high",
+                        "type": "DATETIME",
+                        "mode": "NULLABLE",
+                        "description": "value"
+                      }
+                    ]
+
+                }
+            }
+        }
+    }
+}
