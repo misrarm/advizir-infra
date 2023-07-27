@@ -14,7 +14,7 @@ jobs:
    name: "Terraform Infrastructure Change Management"
    env:
     name: DEV
-    GITHUB_TOKEN: ${{ vars.TF_MODULES_TOKEN }}
+    GITHUB_TOKEN: ${{ secrets.TF_MODULES_TOKEN }}
    runs-on: ubuntu-latest
    defaults:
      run:
