@@ -25,10 +25,6 @@ jobs:
    steps:
     - name: Checkout the repository to the runner
       uses: actions/checkout@v3
-      with:
-        token: $GITHUB_TOKEN
-        persist-credentials: true
-
 
     - name: Setup Terraform with specified version on the runner
       uses: hashicorp/setup-terraform@v2
