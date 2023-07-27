@@ -1,8 +1,9 @@
 terraform {
-#   backend "gcs" {
-#     bucket = "advizir-dev-tfstate"
-#     prefix = "terraform/state-new"
-#   }
+  backend "gcs" {
+    bucket = "advizir-dev-tfstate"
+    # bucket = "gcp-abs-svav-dev-prj-01-tfstate"
+    prefix = "terraform/state"
+  }
 
   required_providers {
     google = {

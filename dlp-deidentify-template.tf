@@ -1,5 +1,5 @@
 resource "google_data_loss_prevention_deidentify_template" "deidentify_template" {
-    parent = "projects/${var.project_id}/locations/us-west1"
+    parent = "projects/${var.project_id}/locations/${var.location}"
     description = "Identify Template for AVA project"
     display_name = "SVAV De-Identify Template"
     template_id =  "svav-identify-template"

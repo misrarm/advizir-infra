@@ -1,8 +1,8 @@
 {
     "datasets": {
         "dataset1": {
-            "dataset_id": "svav_dev_dataset",
-            "friendly_name": "svav_dev_dataset",
+            "dataset_id": "svav_insights_reporting",
+            "friendly_name": "svav_insights_reporting",
             "table_schema": {
                 "table_1": {
                     "table_id": "table_errors",

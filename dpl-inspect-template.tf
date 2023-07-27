@@ -1,5 +1,5 @@
 resource "google_data_loss_prevention_inspect_template" "inspect_template" {
-    parent = "projects/${var.project_id}/locations/us"
+    parent = "projects/${var.project_id}/locations/${var.location}"
     description = "Inspection template for AVA project"
     display_name = "SVAV inspect template"
     template_id = "svav-inspect-template"
