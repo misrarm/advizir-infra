@@ -12,7 +12,9 @@ env:
 jobs:
  terraform:
    name: "Terraform Infrastructure Change Management"
-  #  environment: dev
+   env:
+    name: DEV
+    GITHUB_TOKEN: ${{ vars.TF_MODULES_TOKEN }}
    runs-on: ubuntu-latest
    defaults:
      run:
