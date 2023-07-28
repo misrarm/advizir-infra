@@ -1,0 +1,65 @@
+name: "Terraform Infrastructure Change Management Pipeline with GitHub Actions"
+
+on:
+ push:
+
+env:
+ # verbosity setting for Terraform logs
+ TF_LOG: INFO
+
+jobs:
+ terraform:
+   name: "Terraform Infrastructure Change Management"
+   environment: DEV
+   env:
+    GITHUB_TOKEN: ${{ secrets.TF_MODULES_TOKEN }}
+   runs-on: ubuntu-latest
+   defaults:
+     run:
+       shell: bash
+       # We keep Terraform files in the terraform directory.
+       working-directory: .
+
+   steps:
+    - name: Checkout the repository to the runner
+      uses: actions/checkout@v3
+
+    - name: Setup Terraform with specified version on the runner
+      uses: hashicorp/setup-terraform@v2
+
+    - name: Setup terraform variables
+      id: vars
+      run: |-
+        cat > pipeline.auto.tfvars <<EOF
+        project_id="${{ vars.PROJECT_ID }}"
+        datasets_config="${{ vars.DATASETS_CONFIG }}"
+        scheduled_query_input_stats_table="${{ vars.SCHEDULED_QUERY_INPUT_STATS_TABLE }}"
+        location="${{ vars.LOCATION }}"
+        EOF
+
+    #  DON NOT FORGET THE STATE FOLDER
+    - name: Terraform init
+      id: init
+      run: terraform init
+      env:
+        GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+
+    - name: Terraform validate
+      id: validate
+      run: terraform validate
+      env:
+        GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+
+    # Generates an execution plan for Terraform
+    - name: Terraform Plan
+      run: terraform plan -input=false
+      env:
+        GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+
+      # On push to "main", build or change infrastructure according to Terraform configuration files
+      # Note: It is recommended to set up a required "strict" status check in your repository for "Terraform Cloud". See the documentation on "strict" required status checks for more information: https://help.github.com/en/github/administering-a-repository/types-of-required-status-checks
+    - name: Terraform Apply
+      if: github.ref == 'refs/heads/"master"' && github.event_name == 'push'
+      run: terraform apply -auto-approve -input=false
+      env:
+        GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}

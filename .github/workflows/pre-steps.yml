@@ -1,0 +1,97 @@
+name: Terraform Validate Action
+
+on:
+ push:
+
+jobs:
+  preprare:
+    runs-on: ubuntu-latest
+    name: Collect environment name from branch name
+    steps:
+    - name: Some check on branch
+      id: branch_check
+      run: |
+            echo "Running on branch ${{ github.ref }}"
+            if [ "${{ github.ref }}" = "refs/heads/master" ]; then
+              echo "::set-output name=env_name::Production"
+            elif [ "${{ github.ref }}" = "refs/heads/DEV" ]; then
+              echo "::set-output name=env_name::DEV"
+            else
+               echo "::set-output name=env_name::Features"
+            fi
+
+    - name: Use variable setup in previous step
+      run: echo "I'm using variable ${{ steps.branch_check.outputs.env_name }}"
+
+
+
+    outputs:
+
+      env_name: ${{ steps.branch_check.outputs.env_name }}
+
+
+
+
+  validate:
+
+    needs: [ preprare ]
+
+    runs-on: svav-engops
+
+    environment:
+
+      name: ${{ needs.build.outputs.env_name }}
+
+    name: Validate terraform files
+
+    steps:
+
+      - name: Extract branch name
+
+        shell: bash
+
+        run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
+
+        id: extract_branch
+
+
+
+
+      - name: echo
+
+        shell: bash
+
+        run: |
+
+            echo "HOME: ${HOME}"
+
+            echo "GITHUB_WORKFLOW: ${GITHUB_WORKFLOW}"
+
+            echo "GITHUB_REF_NAME: ${GITHUB_REF_NAME}"
+
+            echo "TEST_VALUE: ${TEST}"
+
+            echo "TEST_1 TEST_VALUE: ${TEST_1}"
+
+        env:
+
+          TEST: ${{ vars.TEST }}
+
+          TEST_1: ${{ needs.build.outputs.env_name }}
+
+
+
+      # - name: Checkout
+
+      #   uses: actions/checkout@v3
+
+
+
+
+      # - name: Terraform validate
+
+      #   uses: dflook/terraform-validate@v1
+
+      #   id: validate
+
+
