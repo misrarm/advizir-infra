@@ -32,7 +32,7 @@ module "table" {
     for dt in local.dataset_tables : "${dt.dataset_id}-${dt.table_id}" => dt
   }
 
-  project_id = local.project_id
+  project_id          = local.project_id
   dataset_id          = each.value.dataset_id
   table_id            = each.value.table_id
   schema              = jsonencode(each.value.schema)
