@@ -29,14 +29,18 @@ jobs:
     - name: Setup Terraform with specified version on the runner
       uses: hashicorp/setup-terraform@v2
 
-    #  DON NOT FORGET THE STATE FOLDER
+      #  DON NOT FORGET THE STATE FOLDER
     - name: Terraform init
       id: init
       run: terraform init
+      env:
+        GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
 
     - name: Terraform validate
       id: validate
       run: terraform validate
+      env:
+        GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
 
     - name: Terraform Apply
       if: github.ref == 'refs/heads/master' && github.event_name == 'push'
