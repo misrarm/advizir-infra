@@ -5,7 +5,7 @@ on:
 
 jobs:
   preprare:
-    runs-on: svav-engops
+    runs-on: ubuntu-latest
     name: Collect environment name from branch name
     steps:
     - name: Some check on branch
