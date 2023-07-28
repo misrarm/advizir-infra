@@ -18,7 +18,7 @@ locals {
 }
 
 module "dataset" {
-  source        = "git@github.com:misrarm/advizir-modules//modules/bigquery/dataset?ref=v1.0.0"
+  source        = "./modules/bigquery/dataset"
   for_each      = local.datasets
   project_id    = local.project_id
   dataset_id    = each.value["dataset_id"]
@@ -27,7 +27,7 @@ module "dataset" {
 }
 
 module "table" {
-  source = "git@github.com:misrarm/advizir-modules//modules/bigquery/table?ref=v1.0.0"
+  source = "./modules/bigquery/table"
   for_each = {
     for dt in local.dataset_tables : "${dt.dataset_id}-${dt.table_id}" => dt
   }
@@ -41,7 +41,7 @@ module "table" {
 }
 
 # module "scheduled_queries" {
-#   source = "git@github.com:misrarm/advizir-modules//modules/bigquery/scheduled_queries?ref=v1.0.0"
+#   source = "./modules/bigquery/scheduled_queries"
 
 #   project_id = local.project_id
 
