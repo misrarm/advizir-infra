@@ -27,6 +27,16 @@ jobs:
     - name: Setup Terraform with specified version on the runner
       uses: hashicorp/setup-terraform@v2
 
+    - name: Setup terraform variables
+      id: vars
+      run: |-
+        cat > pipeline.auto.tfvars <<EOF
+        project_id="${{ vars.PROJECT_ID }}"
+        datasets_config="${{ vars.DATASETS_CONFIG }}"
+        scheduled_query_input_stats_table="${{ vars.SCHEDULED_QUERY_INPUT_STATS_TABLE }}"
+        location="${{ vars.LOCATION }}"
+        EOF
+
     #  DON NOT FORGET THE STATE FOLDER
     - name: Terraform init
       id: init
