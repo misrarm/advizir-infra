@@ -1,7 +1,13 @@
 name: "Terraform Infrastructure Change Management Pipeline with GitHub Actions"
 
 on:
- push:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+  pull_request:
+    branches:
+    - master
+    - production
 
 env:
  # verbosity setting for Terraform logs
