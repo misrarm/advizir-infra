@@ -13,11 +13,15 @@ jobs:
       run: |
             echo "Running on branch ${{ github.ref }}"
             if [ "${{ github.ref }}" = "refs/heads/master" ]; then
-              echo "::set-output name=env_name::Production"
-            elif [ "${{ github.ref }}" = "refs/heads/DEV" ]; then
+              echo "{env_name}={PROD}" >> $GITHUB_OUTPUT
+            if [ "${{ github.ref }}" = "refs/heads/production" ]; then
+              echo "{env_name}={PROD}" >> $GITHUB_OUTPUT
+            elif [ "${{ github.ref }}" = "refs/heads/staging" ]; then
+              echo "{env_name}={QA}" >> $GITHUB_OUTPUT
+            elif [ "${{ github.ref }}" = "refs/heads/development" ]; then
               echo "{env_name}={DEV}" >> $GITHUB_OUTPUT
             else
-              echo "{env_name}={Features}" >> $GITHUB_OUTPUT
+              echo "{env_name}={DEV}" >> $GITHUB_OUTPUT
             fi
 
     - name: Use variable setup in previous step

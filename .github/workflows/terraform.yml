@@ -8,6 +8,8 @@ on:
     branches:
     - master
     - production
+    - staging
+    - development
 
 env:
  # verbosity setting for Terraform logs
