@@ -14,7 +14,7 @@ jobs:
             echo "Running on branch ${{ github.ref }}"
             if [ "${{ github.ref }}" = "refs/heads/master" ]; then
               echo "{env_name}={PROD}" >> $GITHUB_OUTPUT
-            if [ "${{ github.ref }}" = "refs/heads/production" ]; then
+            elif [ "${{ github.ref }}" = "refs/heads/production" ]; then
               echo "{env_name}={PROD}" >> $GITHUB_OUTPUT
             elif [ "${{ github.ref }}" = "refs/heads/staging" ]; then
               echo "{env_name}={QA}" >> $GITHUB_OUTPUT
