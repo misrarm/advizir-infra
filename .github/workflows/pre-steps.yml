@@ -32,7 +32,7 @@ jobs:
 
   validate:
     needs: [ preprare ]
-    runs-on: svav-engops
+    runs-on: ubuntu-latest
     environment:
       name: ${{ needs.build.outputs.env_name }}
     name: Validate terraform files
