@@ -16,13 +16,40 @@ env:
  TF_LOG: INFO
 
 jobs:
- snyk:
+  prepare:
+    runs-on: ubuntu-latest
+    name: Collect environment name from branch name
+    steps:
+    - name: Some check on branch
+      id: branch_check
+      run: |
+            echo "Running on branch ${{ github.ref }}"
+            if [ "${{ github.ref }}" = "refs/heads/master" ]; then
+              echo "::set-output name=env_name::PROD"
+            elif [ "${{ github.ref }}" = "refs/heads/production" ]; then
+              echo "::set-output name=env_name::PROD"
+            elif [ "${{ github.ref }}" = "refs/heads/staging" ]; then
+              echo "::set-output name=env_name::QA"
+            elif [ "${{ github.ref }}" = "refs/heads/development" ]; then
+              echo "::set-output name=env_name::DEV"
+            else
+              echo "::set-output name=env_name::DEV"
+            fi
+
+    - name: Use variable setup in previous step
+      run: echo "I'm using variable ${{ steps.branch_check.outputs.env_name }}"
+
+    outputs:
+      env_name: ${{ steps.branch_check.outputs.env_name }}
+
+  snyk:
     permissions:
       contents: read # for actions/checkout to fetch code
       security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
       actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
     runs-on: ubuntu-latest
-    environment: DEV
+    environment: ${{ needs.preprare.outputs.env_name }}
+    needs: [ prepare ]
     steps:
       - uses: actions/checkout@v3
       - name: Set up Snyk CLI to check for security issues
@@ -30,10 +57,10 @@ jobs:
         # In this case we want to upload the SAST issues to GitHub Code Scanning
         uses: snyk/actions/setup@806182742461562b67788a64410098c9d9b96adb
 
- terraform:
+  terraform:
    name: "Terraform Infrastructure Change Management"
-   environment: DEV
-   needs: [snyk]
+   environment: ${{ needs.preprare.outputs.env_name }}
+   needs: [ snyk, prepare ]
    env:
     GITHUB_TOKEN: ${{ secrets.TF_MODULES_TOKEN }}
    runs-on: ubuntu-latest
