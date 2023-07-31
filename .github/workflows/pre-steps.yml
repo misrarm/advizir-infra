@@ -21,7 +21,8 @@ jobs:
             elif [ "${{ github.ref }}" = "refs/heads/development" ]; then
               echo "{env_name}=DEV" >> $GITHUB_OUTPUT
             else
-              echo "::set-output name=env_name::DEV"
+              # echo "::set-output name=env_name::DEV"
+              echo "{env_name}={DEV}" >> $GITHUB_OUTPUT
             fi
 
     - name: Use variable setup in previous step
