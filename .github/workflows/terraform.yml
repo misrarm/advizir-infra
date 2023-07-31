@@ -12,7 +12,6 @@ on:
     - development
 
 env:
- # verbosity setting for Terraform logs
  TF_LOG: INFO
 
 jobs:
