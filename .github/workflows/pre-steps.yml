@@ -34,8 +34,8 @@ jobs:
     needs: [ preprare ]
     runs-on: ubuntu-latest
     environment:
-      name: ${{ needs.build.outputs.env_name }}
-    name: Validate terraform files
+      name: ${{ needs.preprare.outputs.env_name }}
+    name: "Printing previous step output"
     steps:
       - name: Extract branch name
         shell: bash
@@ -52,7 +52,7 @@ jobs:
             echo "TEST_1 TEST_VALUE: ${TEST_1}"
         env:
           TEST: ${{ vars.TEST }}
-          TEST_1: ${{ needs.build.outputs.env_name }}
+          TEST_1: ${{ needs.preprare.outputs.env_name }}
 
 
 
