@@ -45,6 +45,24 @@ jobs:
     - name: Checkout the repository to the runner
       uses: actions/checkout@v3
 
+    - name: generate-versions
+      run: |
+        cat > versions.tf <<EOF
+        terraform {
+          backend "gcs" {
+            bucket = "${{ vars.BUCKET_NAME }}"
+            prefix = "terraform/state"
+          }
+
+          required_providers {
+            google = {
+              source  = "hashicorp/google"
+              version = "${{ vars.TF_VERSION }}"
+            }
+          }
+        }
+        EOF
+
     - name: Setup Terraform with specified version on the runner
       uses: hashicorp/setup-terraform@v2
 
