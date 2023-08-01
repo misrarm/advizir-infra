@@ -1,4 +1,4 @@
-name: "Terraform Infrastructure Change Management Pipeline with GitHub Actions"
+name: "[TF] Applying Infra Changes"
 
 on:
   push:
@@ -10,45 +10,19 @@ on:
     - production
     - staging
     - development
+    types: [closed]
 
 env:
- TF_LOG: INFO
+  TF_LOG: INFO
 
 jobs:
-  prepare:
-    runs-on: ubuntu-latest
-    name: Collect environment name from branch name
-    steps:
-    - name: Some check on branch
-      id: branch_check
-      run: |
-            echo "Running on branch ${{ github.ref }}"
-            if [ "${{ github.ref }}" = "refs/heads/master" ]; then
-              echo "::set-output name=env_name::PROD"
-            elif [ "${{ github.ref }}" = "refs/heads/production" ]; then
-              echo "::set-output name=env_name::PROD"
-            elif [ "${{ github.ref }}" = "refs/heads/staging" ]; then
-              echo "::set-output name=env_name::QA"
-            elif [ "${{ github.ref }}" = "refs/heads/development" ]; then
-              echo "::set-output name=env_name::DEV"
-            else
-              echo "::set-output name=env_name::DEV"
-            fi
-
-    - name: Use variable setup in previous step
-      run: echo "I'm using variable ${{ steps.branch_check.outputs.env_name }}"
-
-    outputs:
-      env_name: ${{ steps.branch_check.outputs.env_name }}
-
   snyk:
     permissions:
       contents: read # for actions/checkout to fetch code
       security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
       actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
     runs-on: ubuntu-latest
-    environment: ${{ needs.preprare.outputs.env_name }}
-    needs: [ prepare ]
+    environment: DEV
     steps:
       - uses: actions/checkout@v3
       - name: Set up Snyk CLI to check for security issues
@@ -57,21 +31,39 @@ jobs:
         uses: snyk/actions/setup@806182742461562b67788a64410098c9d9b96adb
 
   terraform:
-   name: "Terraform Infrastructure Change Management"
-   environment: ${{ needs.preprare.outputs.env_name }}
-   needs: [ snyk, prepare ]
-   env:
-    GITHUB_TOKEN: ${{ secrets.TF_MODULES_TOKEN }}
-   runs-on: ubuntu-latest
-   defaults:
-     run:
-       shell: bash
-       # We keep Terraform files in the terraform directory.
-       working-directory: .
+    if: ${{ github.event.pull_request.merged }}
+    name: "Terraform Infrastructure Change Management"
+    environment: DEV
+    env:
+      GITHUB_TOKEN: ${{ secrets.TF_MODULES_TOKEN }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        # We keep Terraform files in the terraform directory.
+        working-directory: .
 
-   steps:
+    steps:
     - name: Checkout the repository to the runner
       uses: actions/checkout@v3
+
+    - name: Generate versions.tf file
+      run: |
+        cat > versions.tf <<EOF
+        terraform {
+          backend "gcs" {
+            bucket = "${{ vars.BUCKET_NAME }}"
+            prefix = "terraform/state"
+          }
+
+          required_providers {
+            google = {
+              source  = "hashicorp/google"
+              version = "${{ vars.TF_VERSION }}"
+            }
+          }
+        }
+        EOF
 
     - name: Setup Terraform with specified version on the runner
       uses: hashicorp/setup-terraform@v2
@@ -86,7 +78,6 @@ jobs:
         location="${{ vars.LOCATION }}"
         EOF
 
-    #  DON NOT FORGET THE STATE FOLDER
     - name: Terraform init
       id: init
       run: terraform init
@@ -105,7 +96,6 @@ jobs:
       env:
         GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
 
-      # On push to "main", build or change infrastructure according to Terraform configuration files
     - name: Terraform Apply
       run: terraform apply -auto-approve -input=false
       env:
