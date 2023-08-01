@@ -97,7 +97,7 @@ jobs:
     # Generates an execution plan for Terraform
     - name: Terraform Plan
       id: plan
-      run: terraform plan -input=false
+      run: terraform plan -input=false -out tf.plan
       env:
         GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
 
@@ -110,6 +110,7 @@ jobs:
 
     - uses: actions/github-script@v6
       with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
           const fs = require("fs");
           const plan = fs.readFileSync("/tmp/plan.txt", "utf8");
