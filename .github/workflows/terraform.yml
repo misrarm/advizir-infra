@@ -10,7 +10,7 @@ on:
     - production
     - staging
     - development
-    types: [closed]
+    types: [opened, edited, reopened]
 
 permissions:
   contents: read
@@ -35,7 +35,6 @@ jobs:
         uses: snyk/actions/setup@806182742461562b67788a64410098c9d9b96adb
 
   terraform:
-    if: ${{ github.event.pull_request.merged }}
     name: "Terraform Infrastructure Change Management"
     environment: DEV
     env:
@@ -151,6 +150,7 @@ jobs:
           }
 
     - name: Terraform Apply
+      if: ${{ github.event.pull_request.merged }}
       run: terraform apply -auto-approve -input=false
       env:
         GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
