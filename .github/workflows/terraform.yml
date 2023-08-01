@@ -10,9 +10,10 @@ on:
     - production
     - staging
     - development
+    types: [closed]
 
 env:
- TF_LOG: INFO
+  TF_LOG: INFO
 
 jobs:
   snyk:
@@ -30,22 +31,23 @@ jobs:
         uses: snyk/actions/setup@806182742461562b67788a64410098c9d9b96adb
 
   terraform:
-   name: "Terraform Infrastructure Change Management"
-   environment: DEV
-   env:
-    GITHUB_TOKEN: ${{ secrets.TF_MODULES_TOKEN }}
-   runs-on: ubuntu-latest
-   defaults:
-     run:
-       shell: bash
-       # We keep Terraform files in the terraform directory.
-       working-directory: .
+    if: ${{ github.event.pull_request.merged }}
+    name: "Terraform Infrastructure Change Management"
+    environment: DEV
+    env:
+      GITHUB_TOKEN: ${{ secrets.TF_MODULES_TOKEN }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        # We keep Terraform files in the terraform directory.
+        working-directory: .
 
-   steps:
+    steps:
     - name: Checkout the repository to the runner
       uses: actions/checkout@v3
 
-    - name: generate-versions
+    - name: Generate versions.tf file
       run: |
         cat > versions.tf <<EOF
         terraform {
@@ -76,7 +78,6 @@ jobs:
         location="${{ vars.LOCATION }}"
         EOF
 
-    #  DON NOT FORGET THE STATE FOLDER
     - name: Terraform init
       id: init
       run: terraform init
@@ -95,7 +96,6 @@ jobs:
       env:
         GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
 
-      # On push to "main", build or change infrastructure according to Terraform configuration files
     - name: Terraform Apply
       run: terraform apply -auto-approve -input=false
       env:
