@@ -10,7 +10,7 @@ on:
     - production
     - staging
     - development
-    types: [opened, edited, reopened]
+    types: [opened, edited, reopened, closed]
 
 permissions:
   contents: read
