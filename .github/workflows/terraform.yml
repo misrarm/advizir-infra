@@ -12,10 +12,6 @@ on:
     - development
     types: [opened, edited, reopened, closed]
 
-permissions:
-  contents: read
-  pull-requests: write
-
 env:
   TF_LOG: INFO
 
@@ -35,6 +31,9 @@ jobs:
         uses: snyk/actions/setup@806182742461562b67788a64410098c9d9b96adb
 
   terraform:
+    permissions:
+      contents: read
+      pull-requests: write
     name: "Terraform Infrastructure Change Management"
     environment: DEV
     env:
