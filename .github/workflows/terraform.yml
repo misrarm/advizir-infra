@@ -8,13 +8,14 @@ on:
     branches:
     - master
     - production
+    - staging
+    - development
 
 env:
- # verbosity setting for Terraform logs
  TF_LOG: INFO
 
 jobs:
- snyk:
+  snyk:
     permissions:
       contents: read # for actions/checkout to fetch code
       security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
@@ -28,10 +29,9 @@ jobs:
         # In this case we want to upload the SAST issues to GitHub Code Scanning
         uses: snyk/actions/setup@806182742461562b67788a64410098c9d9b96adb
 
- terraform:
+  terraform:
    name: "Terraform Infrastructure Change Management"
    environment: DEV
-   needs: [snyk]
    env:
     GITHUB_TOKEN: ${{ secrets.TF_MODULES_TOKEN }}
    runs-on: ubuntu-latest
