@@ -1,8 +1,6 @@
-name: Terraform Validate Action
+name: "[SHELL] Prepare Vars"
 
 on:
-  workflow_call:
-
   push:
 
 jobs:

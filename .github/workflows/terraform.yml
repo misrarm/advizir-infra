@@ -1,4 +1,4 @@
-name: "Terraform Infrastructure Change Management Pipeline with GitHub Actions"
+name: "[TF] Applying Infra Changes"
 
 on:
   push:
@@ -10,9 +10,14 @@ on:
     - production
     - staging
     - development
+    types: [opened, edited, reopened, closed]
+
+permissions:
+  contents: read
+  pull-requests: write
 
 env:
- TF_LOG: INFO
+  TF_LOG: INFO
 
 jobs:
   snyk:
@@ -30,22 +35,22 @@ jobs:
         uses: snyk/actions/setup@806182742461562b67788a64410098c9d9b96adb
 
   terraform:
-   name: "Terraform Infrastructure Change Management"
-   environment: DEV
-   env:
-    GITHUB_TOKEN: ${{ secrets.TF_MODULES_TOKEN }}
-   runs-on: ubuntu-latest
-   defaults:
-     run:
-       shell: bash
-       # We keep Terraform files in the terraform directory.
-       working-directory: .
+    name: "Terraform Infrastructure Change Management"
+    environment: DEV
+    env:
+      GITHUB_TOKEN: ${{ secrets.TF_MODULES_TOKEN }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        # We keep Terraform files in the terraform directory.
+        working-directory: .
 
-   steps:
+    steps:
     - name: Checkout the repository to the runner
       uses: actions/checkout@v3
 
-    - name: generate-versions
+    - name: Generate versions.tf file
       run: |
         cat > versions.tf <<EOF
         terraform {
@@ -76,7 +81,6 @@ jobs:
         location="${{ vars.LOCATION }}"
         EOF
 
-    #  DON NOT FORGET THE STATE FOLDER
     - name: Terraform init
       id: init
       run: terraform init
@@ -91,12 +95,62 @@ jobs:
 
     # Generates an execution plan for Terraform
     - name: Terraform Plan
-      run: terraform plan -input=false
+      id: plan
+      run: terraform plan -input=false -out tf.plan
       env:
         GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
 
-      # On push to "main", build or change infrastructure according to Terraform configuration files
+    - name: Terraform Show
+      id: show
+      run: terraform show -no-color tf.plan 2>&1 > /tmp/plan.txt
+      env:
+        GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+      shell: bash
+
+    - uses: actions/github-script@v6
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const fs = require("fs");
+          const plan = fs.readFileSync("/tmp/plan.txt", "utf8");
+          const maxGitHubBodyCharacters = 65536;
+
+          function chunkSubstr(str, size) {
+            const numChunks = Math.ceil(str.length / size)
+            const chunks = new Array(numChunks)
+            for (let i = 0, o = 0; i < numChunks; ++i, o += size) {
+              chunks[i] = str.substr(o, size)
+            }
+            return chunks
+          }
+
+          // Split the Terraform plan into chunks if it's too big and can't fit into the GitHub Action
+          var plans = chunkSubstr(plan, maxGitHubBodyCharacters);
+          for (let i = 0; i < plans.length; i++) {
+            const output = `### TF Part # ${i + 1}
+            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+
+            <details><summary>Show Plan</summary>
+
+            \`\`\`\n
+            ${plans[i]}
+            \`\`\`
+
+            </details>
+
+            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+          }
+
     - name: Terraform Apply
+      if: ${{ github.event.pull_request.merged }}
       run: terraform apply -auto-approve -input=false
       env:
         GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
