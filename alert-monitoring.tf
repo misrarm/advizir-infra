@@ -14,7 +14,7 @@ resource "google_monitoring_alert_policy" "alert_policy" {
       comparison = "COMPARISON_GT"
       threshold_value = "0.0"
       aggregations {
-        alignment_period = "300s"
+        alignment_period = "400s"
         per_series_aligner = "ALIGN_MEAN"
         cross_series_reducer = "REDUCE_NONE"
       }
