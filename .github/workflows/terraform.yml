@@ -16,21 +16,9 @@ env:
   TF_LOG: INFO
 
 jobs:
-  validate:
-    runs-on: ubuntu-latest
-    name: validate
-    steps:
-    - name: Checkout the repository to the runner
-      uses: actions/checkout@v3
-
-    - name: Terraform validate
-      id: validate
-      run: terraform validate
-
   presteps:
     runs-on: ubuntu-latest
     name: presteps
-    needs: validate
     outputs:
       env_name: ${{ steps.branch-based-env.outputs.env_name }}
     steps:
