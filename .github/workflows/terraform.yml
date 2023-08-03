@@ -30,12 +30,37 @@ jobs:
         # In this case we want to upload the SAST issues to GitHub Code Scanning
         uses: snyk/actions/setup@806182742461562b67788a64410098c9d9b96adb
 
+  presteps:
+    runs-on: ubuntu-latest
+    name: presteps
+    outputs:
+      env_name: ${{ steps.branch-based-env.outputs.env_name }}
+    steps:
+      - uses: actions/checkout@v3
+      #Step to create and output vars file
+      - id: branch-based-env
+        run: |
+          echo "Running on branch ${{ github.base_ref }}"
+          if [ "${{ github.base_ref }}" = "refs/heads/main" ]; then
+            echo "env_name=production" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.base_ref }}" = "refs/heads/production" ]; then
+            echo "env_name=production" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.base_ref }}" = "refs/heads/staging" ]; then
+            echo "env_name=staging" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.base_ref }}" = "refs/heads/development" ]; then
+            echo "env_name=DEV" >> "$GITHUB_OUTPUT"
+          else
+            echo "env_name=DEV" >> "$GITHUB_OUTPUT"
+          fi
+      - run: echo "I'm using variable ${{ steps.branch-based-env.outputs.env_name }}"
+
   terraform:
     permissions:
       contents: read
       pull-requests: write
     name: "Terraform Infrastructure Change Management"
-    environment: DEV
+    needs: presteps
+    environment: ${{needs.presteps.outputs.env_name}}
     env:
       GITHUB_TOKEN: ${{ secrets.TF_MODULES_TOKEN }}
     runs-on: ubuntu-latest
