@@ -34,9 +34,9 @@ jobs:
           elif [ "${{ github.base_ref }}" = "refs/heads/staging" ]; then
             echo "env_name=staging" >> "$GITHUB_OUTPUT"
           elif [ "${{ github.base_ref }}" = "refs/heads/development" ]; then
-            echo "env_name=DEV" >> "$GITHUB_OUTPUT"
+            echo "env_name=development" >> "$GITHUB_OUTPUT"
           else
-            echo "env_name=DEV" >> "$GITHUB_OUTPUT"
+            echo "env_name=development" >> "$GITHUB_OUTPUT"
           fi
       - run: echo "I'm using variable ${{ steps.branch-based-env.outputs.env_name }}"
 
