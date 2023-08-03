@@ -16,23 +16,21 @@ env:
   TF_LOG: INFO
 
 jobs:
-  snyk:
-    permissions:
-      contents: read # for actions/checkout to fetch code
-      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
-      actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
+  validate:
     runs-on: ubuntu-latest
-    environment: DEV
+    name: validate
     steps:
-      - uses: actions/checkout@v3
-      - name: Set up Snyk CLI to check for security issues
-        # Snyk can be used to break the build when it detects security issues.
-        # In this case we want to upload the SAST issues to GitHub Code Scanning
-        uses: snyk/actions/setup@806182742461562b67788a64410098c9d9b96adb
+    - name: Checkout the repository to the runner
+      uses: actions/checkout@v3
+
+    - name: Terraform validate
+      id: validate
+      run: terraform validate
 
   presteps:
     runs-on: ubuntu-latest
     name: presteps
+    needs: validate
     outputs:
       env_name: ${{ steps.branch-based-env.outputs.env_name }}
     steps:
@@ -53,6 +51,21 @@ jobs:
             echo "env_name=DEV" >> "$GITHUB_OUTPUT"
           fi
       - run: echo "I'm using variable ${{ steps.branch-based-env.outputs.env_name }}"
+
+  snyk:
+    permissions:
+      contents: read # for actions/checkout to fetch code
+      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
+      actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
+    runs-on: ubuntu-latest
+    needs: presteps
+    environment: ${{ needs.presteps.outputs.env_name }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Snyk CLI to check for security issues
+      # Snyk can be used to break the build when it detects security issues.
+      # In this case we want to upload the SAST issues to GitHub Code Scanning
+        uses: snyk/actions/setup@806182742461562b67788a64410098c9d9b96adb
 
   terraform:
     permissions:
