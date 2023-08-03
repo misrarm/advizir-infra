@@ -59,8 +59,8 @@ jobs:
       contents: read
       pull-requests: write
     name: "Terraform Infrastructure Change Management"
-    needs: presteps
-    environment: ${{needs.presteps.outputs.env_name}}
+    needs: [ presteps, snyk]
+    environment: ${{ needs.presteps.outputs.env_name }}
     env:
       GITHUB_TOKEN: ${{ secrets.TF_MODULES_TOKEN }}
     runs-on: ubuntu-latest
