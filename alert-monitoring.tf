@@ -4,7 +4,7 @@ locals {
 
 resource "google_monitoring_alert_policy" "alert_policy" {
   project = var.project_id
-  display_name = "GKE Container - High CPU Limit Utilization (esgk-gke-res-prod-ue4-cluster-01 cluster)"
+  display_name = "[GKE Container] - High CPU Limit Utilization (esgk-gke-res-prod-ue4-cluster-01 cluster)"
   combiner     = "OR"
   conditions {
     display_name = "GKE container in esgk-gke-res-prod-ue4-cluster-01 cluster has high CPU limit utilization"
