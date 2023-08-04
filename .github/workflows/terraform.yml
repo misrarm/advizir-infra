@@ -111,7 +111,7 @@ jobs:
         tf_actions_subcommand: 'init'
         tf_actions_working_dir: '.'
       env:
-        TF_WORKSPACE: dev
+        TF_WORKSPACE: ${{ needs.presteps.outputs.env_name }}
         GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
 
     - name: Terraform validate
