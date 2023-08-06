@@ -63,7 +63,7 @@ jobs:
       contents: read
       pull-requests: write
     name: "Terraform Infrastructure Change Management"
-    needs: [ snyk ]
+    needs: [ presteps, snyk ]
     environment: ${{ needs.presteps.outputs.env_name }}
     runs-on: ubuntu-latest
     defaults:
