@@ -1,4 +1,5 @@
 resource "google_compute_firewall" "default-allow-icmp" {
+  project = var.project_id
   name    = "default-allow-icmp-tcp"
   network = "default"
 
