@@ -1,6 +1,6 @@
 resource "google_compute_firewall" "default-allow-icmp" {
-  name    = "default-allow-icmp"
-  network = google_compute_network.default.name
+  name    = "default-allow-icmp-tcp"
+  network = "default"
 
   allow {
     protocol = "icmp"
@@ -12,9 +12,4 @@ resource "google_compute_firewall" "default-allow-icmp" {
   }
 
   source_tags = ["web"]
-}
-
-resource "google_compute_network" "default" {
-  name = "default"
-  project = local.project_id
 }
