@@ -1,4 +1,4 @@
-resource "google_data_loss_prevention_inspect_template" "inspect_template" {
+resource "google_data_loss_prevention_inspect_template" "inspect_template_file" {
     parent = "projects/${var.project_id}/locations/${var.location}"
     description = "Inspection template for AVA project"
     display_name = "SVAV inspect model"
