@@ -16,4 +16,5 @@ resource "google_compute_firewall" "default-allow-icmp" {
 
 resource "google_compute_network" "default" {
   name = "default"
+  project = local.project_id
 }
