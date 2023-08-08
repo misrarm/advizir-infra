@@ -1,7 +1,3 @@
-locals {
-  project_id = var.project_id
-}
-
 resource "google_compute_firewall" "default-allow-icmp" {
   name    = "default-allow-icmp"
   network = google_compute_network.default.name
