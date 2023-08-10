@@ -27,13 +27,13 @@ jobs:
       - id: branch-based-env
         run: |
           echo "Running on branch ${{ github.base_ref }}"
-          if [ "${{ github.base_ref }}" = "refs/heads/master" ]; then
+          if [ "${{ github.base_ref }}" = "master" ]; then
             echo "env_name=production" >> "$GITHUB_OUTPUT"
-          elif [ "${{ github.base_ref }}" = "refs/heads/production" ]; then
+          elif [ "${{ github.base_ref }}" = "production" ]; then
             echo "env_name=production" >> "$GITHUB_OUTPUT"
-          elif [ "${{ github.base_ref }}" = "refs/heads/staging" ]; then
+          elif [ "${{ github.base_ref }}" = "staging" ]; then
             echo "env_name=staging" >> "$GITHUB_OUTPUT"
-          elif [ "${{ github.base_ref }}" = "refs/heads/development" ]; then
+          elif [ "${{ github.base_ref }}" = "development" ]; then
             echo "env_name=development" >> "$GITHUB_OUTPUT"
           else
             echo "env_name=development" >> "$GITHUB_OUTPUT"
