@@ -23,7 +23,7 @@ jobs:
       env_name: ${{ steps.branch-based-env.outputs.env_name }}
     steps:
       - uses: actions/checkout@v3
-      #Step to create and output vars file
+
       - id: branch-based-env
         run: |
           echo "Running on branch ${{ github.base_ref }}"
@@ -38,7 +38,8 @@ jobs:
           else
             echo "env_name=development" >> "$GITHUB_OUTPUT"
           fi
-      - run: echo "I'm using variable ${{ steps.branch-based-env.outputs.env_name }}"
+      - id: echo-env-name
+        run: echo "I'm using variable ${{ steps.branch-based-env.outputs.env_name }}"
 
   snyk:
     permissions:
