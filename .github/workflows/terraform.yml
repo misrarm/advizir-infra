@@ -10,7 +10,7 @@ on:
     - production
     - staging
     - development
-    types: [opened, edited, reopened, closed]
+    types: [ opened, edited, synchronize, reopened, closed ]
 
 env:
   TF_LOG: INFO
