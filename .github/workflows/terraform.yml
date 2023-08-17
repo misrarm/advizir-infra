@@ -38,7 +38,7 @@ jobs:
           else
             echo "env_name=development" >> "$GITHUB_OUTPUT"
           fi
-          run: echo "Using ${{ steps.branch-based-env.outputs.env_name }} github environment"
+          echo "Using ${{ steps.branch-based-env.outputs.env_name }} github environment"
 
   snyk:
     permissions:
