@@ -38,7 +38,8 @@ jobs:
           else
             echo "env_name=development" >> "$GITHUB_OUTPUT"
           fi
-          echo "Using ${{ steps.branch-based-env.outputs.env_name }} github environment"
+      - id: echo-env-name
+        run: echo "I'm using variable ${{ steps.branch-based-env.outputs.env_name }}"
 
   snyk:
     permissions:
@@ -133,7 +134,7 @@ jobs:
       env:
         GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
 
-    - name: Terraform linting
+    - name: Check linting of Terraform modules
       uses: devops-infra/action-tflint@v0.3
 
     - name: Terraform validate
