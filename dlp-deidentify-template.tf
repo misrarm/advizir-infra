@@ -4,10 +4,6 @@ resource "google_data_loss_prevention_deidentify_template" "deidentify_template"
     display_name = "SVAV De-Identify Template"
     template_id =  "svav-identify-template"
 
-    tags = {
-        iac = "terraform"
-    }
-
     deidentify_config {
         info_type_transformations {
             transformations {
