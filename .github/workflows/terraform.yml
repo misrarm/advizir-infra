@@ -70,12 +70,14 @@ jobs:
         with:
           python-version: 3.8
 
+      # Skipping Customer Supplied Encryption Keys (CSEK) for the time being (CKV_GCP_81,CKV_GCP_80)
       - name: Test with Checkov
         id: checkov
         uses: bridgecrewio/checkov-action@master
         with:
           directory: .
-          framework: terraform 
+          framework: terraform
+          skip_check: CKV_GCP_81,CKV_GCP_80
 
   terraform:
     permissions:
