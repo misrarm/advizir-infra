@@ -134,6 +134,9 @@ jobs:
       env:
         GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
 
+    - name: Check linting of Terraform modules
+      uses: devops-infra/action-tflint@v0.3
+
     - name: Terraform validate
       id: validate
       run: terraform validate
