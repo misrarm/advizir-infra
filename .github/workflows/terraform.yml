@@ -59,6 +59,15 @@ jobs:
           # This is where you will need to introduce the Snyk API token created with your Snyk account
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
+      - name: Snyk auth
+        run: snyk auth $SNYK_TOKEN
+        env:
+          # This is where you will need to introduce the Snyk API token created with your Snyk account
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Snyk IaC test and report
+        run: snyk iac test --report # || true
+
   checkov:
     runs-on: ubuntu-latest
     steps:
