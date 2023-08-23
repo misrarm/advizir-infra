@@ -59,6 +59,9 @@ jobs:
           # This is where you will need to introduce the Snyk API token created with your Snyk account
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
+      - name: Snyk IaC test and report
+        run: snyk iac test --report # || true
+
   checkov:
     runs-on: ubuntu-latest
     steps:
@@ -67,8 +70,6 @@ jobs:
 
       - name: Set up Python 3.8
         uses: actions/setup-python@v4
-        with:
-          python-version: 3.8
 
       # Skipping Customer Supplied Encryption Keys (CSEK) for the time being (CKV_GCP_81,CKV_GCP_80)
       - name: Test with Checkov
