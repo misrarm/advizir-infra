@@ -1,0 +1,215 @@
+name: "[TF] Applying Infra Changes"
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+  pull_request:
+    branches:
+    - master
+    - production
+    - staging
+    - development
+    types: [ opened, edited, synchronize, reopened, closed ]
+
+env:
+  TF_LOG: INFO
+
+jobs:
+  presteps:
+    runs-on: ubuntu-latest
+    name: presteps
+    outputs:
+      env_name: ${{ steps.branch-based-env.outputs.env_name }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - id: branch-based-env
+        run: |
+          echo "Running on branch ${{ github.base_ref }}"
+          if [ "${{ github.base_ref }}" = "master" ]; then
+            echo "env_name=production" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.base_ref }}" = "production" ]; then
+            echo "env_name=production" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.base_ref }}" = "staging" ]; then
+            echo "env_name=staging" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.base_ref }}" = "development" ]; then
+            echo "env_name=development" >> "$GITHUB_OUTPUT"
+          else
+            echo "env_name=development" >> "$GITHUB_OUTPUT"
+          fi
+      - id: echo-env-name
+        run: echo "I'm using variable ${{ steps.branch-based-env.outputs.env_name }}"
+
+  snyk:
+    permissions:
+      contents: read # for actions/checkout to fetch code
+      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
+      actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
+    runs-on: ubuntu-latest
+    needs: presteps
+    environment: ${{ needs.presteps.outputs.env_name }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Snyk CLI to check for security issues
+      # Snyk can be used to break the build when it detects security issues.
+      # In this case we want to upload the SAST issues to GitHub Code Scanning
+        uses: snyk/actions/setup@806182742461562b67788a64410098c9d9b96adb
+        env:
+          # This is where you will need to introduce the Snyk API token created with your Snyk account
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Snyk auth
+        run: snyk auth $SNYK_TOKEN
+        env:
+          # This is where you will need to introduce the Snyk API token created with your Snyk account
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Snyk IaC test and report
+        run: snyk iac test --report # || true
+
+  checkov:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository to the runner
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.8
+
+      # Skipping Customer Supplied Encryption Keys (CSEK) for the time being (CKV_GCP_81,CKV_GCP_80)
+      - name: Test with Checkov
+        id: checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: .
+          framework: terraform
+          skip_check: CKV_GCP_81,CKV_GCP_80
+
+  terraform:
+    permissions:
+      contents: read
+      pull-requests: write
+    name: "Terraform Infrastructure Change Management"
+    needs: [ presteps, snyk, checkov ]
+    environment: ${{ needs.presteps.outputs.env_name }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        # We keep Terraform files in the terraform directory.
+        working-directory: .
+
+    steps:
+    - name: Checkout the repository to the runner
+      uses: actions/checkout@v3
+
+    - name: Generate versions.tf file
+      run: |
+        cat > versions.tf <<EOF
+        terraform {
+          backend "gcs" {
+            bucket = "${{ vars.BUCKET_NAME }}"
+            prefix = "terraform/state"
+          }
+
+          required_providers {
+            google = {
+              source  = "hashicorp/google"
+              version = "${{ vars.TF_VERSION }}"
+            }
+          }
+        }
+        EOF
+
+    - name: Setup Terraform with specified version on the runner
+      uses: hashicorp/setup-terraform@v2
+
+    - name: Setup terraform variables
+      id: vars
+      run: |-
+        cat > pipeline.auto.tfvars <<EOF
+        project_id="${{ vars.PROJECT_ID }}"
+        datasets_config="${{ vars.DATASETS_CONFIG }}"
+        scheduled_query_input_stats_table="${{ vars.SCHEDULED_QUERY_INPUT_STATS_TABLE }}"
+        location="${{ vars.LOCATION }}"
+        EOF
+
+    - name: Terraform init
+      id: init
+      run: terraform init
+      env:
+        GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+
+    - name: Check linting of Terraform modules
+      uses: devops-infra/action-tflint@v0.3
+
+    - name: Terraform validate
+      id: validate
+      run: terraform validate
+      env:
+        GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+
+    # Generates an execution plan for Terraform
+    - name: Terraform Plan
+      id: plan
+      run: terraform plan -input=false -out tf.plan
+      env:
+        GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+
+    - name: Terraform Show
+      id: show
+      run: terraform show -no-color tf.plan 2>&1 > /tmp/plan.txt
+      env:
+        GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+      shell: bash
+
+    - uses: actions/github-script@v6
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const fs = require("fs");
+          const plan = fs.readFileSync("/tmp/plan.txt", "utf8");
+          const maxGitHubBodyCharacters = 65536;
+
+          function chunkSubstr(str, size) {
+            const numChunks = Math.ceil(str.length / size)
+            const chunks = new Array(numChunks)
+            for (let i = 0, o = 0; i < numChunks; ++i, o += size) {
+              chunks[i] = str.substr(o, size)
+            }
+            return chunks
+          }
+
+          // Split the Terraform plan into chunks if it's too big and can't fit into the GitHub Action
+          var plans = chunkSubstr(plan, maxGitHubBodyCharacters);
+          for (let i = 0; i < plans.length; i++) {
+            const output = `### TF Part # ${i + 1}
+            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+
+            <details><summary>Show Plan</summary>
+
+            \`\`\`\n
+            ${plans[i]}
+            \`\`\`
+
+            </details>
+
+            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+          }
+
+    - name: Terraform Apply
+      if: ${{ github.event.pull_request.merged }}
+      run: terraform apply -auto-approve -input=false
+      env:
+        GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
