@@ -10,7 +10,7 @@ on:
     - production
     - staging
     - development
-    types: [opened, edited, reopened, closed]
+    types: [ opened, edited, synchronize, reopened, closed ]
 
 env:
   TF_LOG: INFO
@@ -59,12 +59,41 @@ jobs:
           # This is where you will need to introduce the Snyk API token created with your Snyk account
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
+      - name: Snyk auth
+        run: snyk auth $SNYK_TOKEN
+        env:
+          # This is where you will need to introduce the Snyk API token created with your Snyk account
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Snyk IaC test and report
+        run: snyk iac test --report # || true
+
+  checkov:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository to the runner
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.8
+
+      # Skipping Customer Supplied Encryption Keys (CSEK) for the time being (CKV_GCP_81,CKV_GCP_80)
+      - name: Test with Checkov
+        id: checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: .
+          framework: terraform
+          skip_check: CKV_GCP_81,CKV_GCP_80
+
   terraform:
     permissions:
       contents: read
       pull-requests: write
     name: "Terraform Infrastructure Change Management"
-    needs: [ presteps, snyk ]
+    needs: [ presteps, snyk, checkov ]
     environment: ${{ needs.presteps.outputs.env_name }}
     runs-on: ubuntu-latest
     defaults:
@@ -113,6 +142,9 @@ jobs:
       run: terraform init
       env:
         GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+
+    - name: Check linting of Terraform modules
+      uses: devops-infra/action-tflint@v0.3
 
     - name: Terraform validate
       id: validate
